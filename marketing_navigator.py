@@ -1,7 +1,13 @@
-# marketing_navigator.py
 import streamlit as st
 
-# Structuur met 10 vragen per deelgebied
+# Initialiseer sessie
+if 'question_index' not in st.session_state:
+    st.session_state.question_index = 0
+    st.session_state.responses = []
+    st.session_state.name = ''
+    st.session_state.email = ''
+
+# Vragen per deelgebied
 questions = {
     "Strategie en positionering": [
         "We hebben een duidelijke en onderscheidende positionering in de markt.",
@@ -101,27 +107,54 @@ questions = {
     ]
 }
 
-st.title("📊 Marketing Navigator")
-st.markdown("Welkom! Beoordeel 80 stellingen over jouw marketing op een schaal van 1 (zeer zwak) tot 5 (zeer sterk).")
+# Vlak alle vragen uit
+def flatten_questions(questions):
+    return [(cat, q) for cat in questions for q in questions[cat]]
 
-responses = []
+flat_questions = flatten_questions(questions)
 
-for category, qs in questions.items():
-    st.header(category)
-    for q in qs:
-        score = st.slider(q, 1, 5, 3)
-        responses.append(score)
-
-if st.button("Analyseer mijn strategie"):
+# Analyse en export
+def analyse_and_export():
     result = {}
+    scores = st.session_state.responses
     idx = 0
     for category, qs in questions.items():
-        set_scores = responses[idx:idx+len(qs)]
+        set_scores = scores[idx:idx+len(qs)]
         idx += len(qs)
         avg = round(sum(set_scores)/len(set_scores), 2)
         result[category] = avg
 
-    st.subheader("🔍 Analyse per deelgebied")
+    st.subheader("🔍 Jouw Analyse")
     for category, avg in sorted(result.items(), key=lambda x: x[1]):
         priority = "Hoog" if avg < 3 else ("Gemiddeld" if avg < 4 else "Laag")
         st.write(f"**{category}**: {avg} → Prioriteit: {priority}")
+
+    submitted_info = {
+        "Naam": st.session_state.name,
+        "E-mail": st.session_state.email,
+        "Scores per deelgebied": result
+    }
+    st.download_button("📥 Download jouw resultaten", str(submitted_info), file_name="marketing_navigator_resultaten.txt")
+
+# UI
+st.title("📊 Marketing Navigator")
+
+if not st.session_state.name:
+    st.session_state.name = st.text_input("Wat is je naam?")
+    st.session_state.email = st.text_input("Wat is je e-mailadres?")
+    if st.session_state.name and st.session_state.email:
+        st.experimental_rerun()
+else:
+    total = len(flat_questions)
+    q_index = st.session_state.question_index
+
+    if q_index < total:
+        category, question = flat_questions[q_index]
+        st.write(f"Vraag {q_index+1} van {total} ({category})")
+        score = st.slider(question, 1, 5, 3, key=f"slider_{q_index}")
+        if st.button("Volgende vraag"):
+            st.session_state.responses.append(score)
+            st.session_state.question_index += 1
+            st.experimental_rerun()
+    else:
+        analyse_and_export()
