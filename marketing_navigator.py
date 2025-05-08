@@ -1,11 +1,16 @@
 import streamlit as st
 
+# Toon logo bovenaan
+st.image("logo.png", width=150)
+
 # Initialiseer sessie
 if 'question_index' not in st.session_state:
     st.session_state.question_index = 0
     st.session_state.responses = []
     st.session_state.name = ''
     st.session_state.email = ''
+    st.session_state.company = ''
+    st.session_state.role = ''
 
 # Vragen per deelgebied
 questions = {
@@ -132,6 +137,8 @@ def analyse_and_export():
     submitted_info = {
         "Naam": st.session_state.name,
         "E-mail": st.session_state.email,
+        "Bedrijfsnaam": st.session_state.company,
+        "Functie": st.session_state.role,
         "Scores per deelgebied": result
     }
     st.download_button("📥 Download jouw resultaten", str(submitted_info), file_name="marketing_navigator_resultaten.txt")
@@ -142,7 +149,9 @@ st.title("📊 Marketing Navigator")
 if not st.session_state.name:
     st.session_state.name = st.text_input("Wat is je naam?")
     st.session_state.email = st.text_input("Wat is je e-mailadres?")
-    if st.session_state.name and st.session_state.email:
+    st.session_state.company = st.text_input("Wat is je bedrijfsnaam?")
+    st.session_state.role = st.text_input("Wat is je functie?")
+    if st.session_state.name and st.session_state.email and st.session_state.company and st.session_state.role:
         st.experimental_rerun()
 else:
     total = len(flat_questions)
