@@ -155,6 +155,6 @@ else:
         if st.button("Volgende vraag"):
             st.session_state.responses.append(score)
             st.session_state.question_index += 1
-            st.experimental_rerun()
+            st.experimental_user()
     else:
         analyse_and_export()
